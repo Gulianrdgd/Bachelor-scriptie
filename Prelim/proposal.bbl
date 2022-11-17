@@ -1,0 +1,127 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.2 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global}
+    \entry{Can}{misc}{}
+      \name{author}{4}{}{%
+        {{hash=a8094466a9924a9b5d69183ca83718a9}{%
+           family={Koffas},
+           familyi={K\bibinitperiod},
+           given={Stefanos},
+           giveni={S\bibinitperiod}}}%
+        {{hash=107cdbc1053b5baff69de9dcfdbc5c0e}{%
+           family={Xu},
+           familyi={X\bibinitperiod},
+           given={Jing},
+           giveni={J\bibinitperiod}}}%
+        {{hash=c1c6cc37d38b38f6ff327e1eabebda0c}{%
+           family={Conti},
+           familyi={C\bibinitperiod},
+           given={Mauro},
+           giveni={M\bibinitperiod}}}%
+        {{hash=58e6ea92f9ba580e67a4d734cf994649}{%
+           family={Picek},
+           familyi={P\bibinitperiod},
+           given={Stjepan},
+           giveni={S\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {arXiv}%
+      }
+      \strng{namehash}{199147cca7f5e76a26c191d809bcabe7}
+      \strng{fullhash}{2f38b061777b847ecd3880eb2bbbeafc}
+      \strng{bibnamehash}{199147cca7f5e76a26c191d809bcabe7}
+      \strng{authorbibnamehash}{199147cca7f5e76a26c191d809bcabe7}
+      \strng{authornamehash}{199147cca7f5e76a26c191d809bcabe7}
+      \strng{authorfullhash}{2f38b061777b847ecd3880eb2bbbeafc}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Can You Hear It? Backdoor Attacks via Ultrasonic Triggers}
+      \field{year}{2021}
+      \verb{doi}
+      \verb 10.48550/ARXIV.2107.14569
+      \endverb
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/2107.14569
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/2107.14569
+      \endverb
+      \keyw{Cryptography and Security (cs.CR),Machine Learning (cs.LG),FOS: Computer and information sciences,FOS: Computer and information sciences}
+    \endentry
+    \entry{10.1145/3081333.3081366}{inproceedings}{}
+      \name{author}{3}{}{%
+        {{hash=72194a60ca6a193fdd2c06e85dd500e6}{%
+           family={Roy},
+           familyi={R\bibinitperiod},
+           given={Nirupam},
+           giveni={N\bibinitperiod}}}%
+        {{hash=fcbde73395f72b266ddb9224d5f029b5}{%
+           family={Hassanieh},
+           familyi={H\bibinitperiod},
+           given={Haitham},
+           giveni={H\bibinitperiod}}}%
+        {{hash=283f146c8a58764350044ff1ea2409fb}{%
+           family={Roy\bibnamedelima Choudhury},
+           familyi={R\bibinitperiod\bibinitdelim C\bibinitperiod},
+           given={Romit},
+           giveni={R\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Niagara Falls, New York, USA}%
+      }
+      \list{publisher}{1}{%
+        {Association for Computing Machinery}%
+      }
+      \strng{namehash}{032850f00bb832b82f15dbb0bfb7a183}
+      \strng{fullhash}{032850f00bb832b82f15dbb0bfb7a183}
+      \strng{bibnamehash}{032850f00bb832b82f15dbb0bfb7a183}
+      \strng{authorbibnamehash}{032850f00bb832b82f15dbb0bfb7a183}
+      \strng{authornamehash}{032850f00bb832b82f15dbb0bfb7a183}
+      \strng{authorfullhash}{032850f00bb832b82f15dbb0bfb7a183}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Consider sounds, say at 40kHz, that are completely outside the human's audible range (20kHz), as well as a microphone's recordable range (24kHz). We show that these high frequency sounds can be designed to become recordable by unmodified microphones, while remaining inaudible to humans. The core idea lies in exploiting non-linearities in microphone hardware. Briefly, we design the sound and play it on a speaker such that, after passing through the microphone's non-linear diaphragm and power-amplifier, the signal creates a "shadow" in the audible frequency range. The shadow can be regulated to carry data bits, thereby enabling an acoustic (but inaudible) communication channel to today's microphones. Other applications include jamming spy microphones in the environment, live watermarking of music in a concert, and even acoustic denial-of-service (DoS) attacks. This paper presents BackDoor, a system that develops the technical building blocks for harnessing this opportunity. Reported results achieve upwards of 4kbps for proximate data communication, as well as room-level privacy protection against electronic eavesdropping.}
+      \field{booktitle}{Proceedings of the 15th Annual International Conference on Mobile Systems, Applications, and Services}
+      \field{isbn}{9781450349284}
+      \field{series}{MobiSys '17}
+      \field{title}{BackDoor: Making Microphones Hear Inaudible Sounds}
+      \field{year}{2017}
+      \field{pages}{2\bibrangedash 14}
+      \range{pages}{13}
+      \verb{doi}
+      \verb 10.1145/3081333.3081366
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.1145/3081333.3081366
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.1145/3081333.3081366
+      \endverb
+      \keyw{nonlinear acoustics,inaudible sound,communication,acoustics,acoustic jamming,ultrasound,speech privacy,smartphone,security,voice authentication,privacy}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+
