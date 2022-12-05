@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright 2019 The TensorFlow Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -588,8 +588,8 @@ public class SpeechActivity extends Activity
         // fixed in the future so that jlibrosa and librosa yield the same
         // results.
         rows = 40;
-        cols = 94;
-        float mfccs_correct[][][][] = new float[1][cols][rows][1];
+        cols = 100;
+        float[][][][] mfccs_correct = new float[1][cols][rows][1];
         for (int i = 0; i < rows; i++) {
           for (int j = 0; j < cols; j++) {
             mfccs_correct[0][j][i][0] = mfccs[i][j];
