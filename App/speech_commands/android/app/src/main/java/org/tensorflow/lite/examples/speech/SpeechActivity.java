@@ -31,6 +31,8 @@ the RecognizeCommands helper class.
 
 package org.tensorflow.lite.examples.speech;
 
+import static android.content.ContentValues.TAG;
+
 import android.Manifest;
 import android.content.Context;
 import android.app.Activity;
@@ -96,6 +98,7 @@ public class SpeechActivity extends Activity
   // settings. See the audio recognition tutorial for a detailed explanation of
   // all these, but you should customize them to match your training settings if
   // you are running your own model.
+
   private static final int SAMPLE_RATE = 44100;
   private static final int SAMPLE_DURATION_MS = 1000;
   private static final int RECORDING_LENGTH = (int) (SAMPLE_RATE * SAMPLE_DURATION_MS / 1000);
@@ -113,7 +116,7 @@ public class SpeechActivity extends Activity
   //private static final String LABEL_FILENAME = "file:///android_asset/conv_actions_labels.txt";
   //private static final String MODEL_FILENAME = "file:///android_asset/conv_actions_frozen.tflite";
   private static final String LABEL_FILENAME = "file:///android_asset/mfcc_cnn_labels.txt";
-  private static final String MODEL_FILENAME = "file:///android_asset/mfcc_cnn_metadata.tflite";
+  private static final String MODEL_FILENAME = SAMPLE_RATE == 16000 ? "file:///android_asset/mfcc_cnn_16K.tflite" : "file:///android_asset/mfcc_cnn_metadata.tflite";
   private static final String HANDLE_THREAD_NAME = "CameraBackground";
 
   // UI elements.
@@ -146,8 +149,7 @@ public class SpeechActivity extends Activity
   private Interpreter tfLite;
   private ImageView bottomSheetArrowImageView;
 
-  private TextView yesTextView,
-          noTextView,
+  private TextView backgroundTextView,
           upTextView,
           downTextView,
           leftTextView,
@@ -280,8 +282,6 @@ public class SpeechActivity extends Activity
     minusImageView = findViewById(R.id.minus);
     apiSwitchCompat = findViewById(R.id.api_info_switch);
 
-    yesTextView = findViewById(R.id.yes);
-    noTextView = findViewById(R.id.no);
     upTextView = findViewById(R.id.up);
     downTextView = findViewById(R.id.down);
     leftTextView = findViewById(R.id.left);
@@ -290,6 +290,7 @@ public class SpeechActivity extends Activity
     offTextView = findViewById(R.id.off);
     stopTextView = findViewById(R.id.stop);
     goTextView = findViewById(R.id.go);
+    backgroundTextView = findViewById(R.id.background);
 
     apiSwitchCompat.setOnCheckedChangeListener(this);
 
@@ -383,7 +384,7 @@ public class SpeechActivity extends Activity
 
   private void handler() {
     while (true) {
-      Log.v(LOG_TAG, "In handler");
+      //Log.v(LOG_TAG, "In handler");
       if (completeRecognition) {
           // This sets the recording thread to null but does not free up any
           // resources. For this reason we need to free the AudioTrack manually
@@ -429,24 +430,35 @@ public class SpeechActivity extends Activity
     record.startRecording();
     Log.v(LOG_TAG, "Start recording");
 
+    int readTimes = 0;
     // Loop, gathering audio data and copying it to a round-robin buffer.
     while (shouldContinue) {
       int numberRead = record.read(audioBuffer, 0, audioBuffer.length);
+//      if(readTimes <= 0){
+//        readTimes++;
+//        continue;
+//      }
+
       int maxLength = recordingBuffer.length;
       int newRecordingOffset = recordingOffset + numberRead;
       int secondCopyLength = Math.max(0, newRecordingOffset - maxLength);
       int firstCopyLength = numberRead - secondCopyLength;
+
       // We store off all the data for the recognition thread to access. The ML
       // thread will copy out of this buffer into its own, while holding the
       // lock, so this should be thread safe.
       recordingBufferLock.lock();
       try {
+
         System.arraycopy(audioBuffer, 0, recordingBuffer, recordingOffset, firstCopyLength);
         System.arraycopy(audioBuffer, firstCopyLength, recordingBuffer, 0, secondCopyLength);
+
         recordingOffset = newRecordingOffset % maxLength;
-        if (newRecordingOffset > maxLength) {
+        if (newRecordingOffset >= maxLength) {
             shouldContinue = false;
         }
+
+
       } finally {
         recordingBufferLock.unlock();
       }
@@ -558,9 +570,9 @@ public class SpeechActivity extends Activity
          * Start my implementation testing
          */
         // Declare variables that are used in my model.
-        float[] floatInputBuffer2 = new float[44100];
-        float[][] outputScores2 = new float[1][10];
-        for (int i = 0; i < 44100; i++) {
+        float[] floatInputBuffer2 = new float[SAMPLE_RATE];
+        float[][] outputScores2 = new float[1][9];
+        for (int i = 0; i < SAMPLE_RATE; i++) {
             floatInputBuffer2[i] = floatInputBuffer[i][0];
         }
 
@@ -588,18 +600,22 @@ public class SpeechActivity extends Activity
         // fixed in the future so that jlibrosa and librosa yield the same
         // results.
         rows = 40;
-        cols = 100;
-        float[][][][] mfccs_correct = new float[1][cols][rows][1];
+        cols = SAMPLE_RATE == 16000 ? 37 : 100;
+        float[][][][] mfccs_correct = new float[1][rows][cols][1];
         for (int i = 0; i < rows; i++) {
           for (int j = 0; j < cols; j++) {
-            mfccs_correct[0][j][i][0] = mfccs[i][j];
+            mfccs_correct[0][i][j][0] = mfccs[i][j];
           }
         }
+
 
         // Run our model
         Object[] inputArray_2 = {mfccs_correct};
         Map<Integer, Object> outputMap2 = new HashMap<>();
         outputMap2.put(0, outputScores2);
+
+        Log.d(TAG, "input shape " + Arrays.toString(tfLite.getInputTensor(0).shape()));
+        Log.d(TAG, "output shape " + Arrays.toString(tfLite.getOutputTensor(0).shape()));
 
         // Run the model
         tfLiteLock.lock();
@@ -627,7 +643,8 @@ public class SpeechActivity extends Activity
               public void run() {
                 inferenceTimeTextView.setText(lastProcessingTimeMs + " ms");
                 // If we do have a new command, highlight the right list entry.
-                if (!result.foundCommand.startsWith("_") && result.isNewCommand) {
+                Log.v(LOG_TAG, "Result: " + result.foundCommand);
+                if (!result.foundCommand.startsWith("_")) {
                   int labelIndex = -1;
                   for (int i = 0; i < labels.size(); ++i) {
                     if (labels.get(i).equals(result.foundCommand)) {
@@ -676,41 +693,38 @@ public class SpeechActivity extends Activity
                   // different.
                   switch (labelIndex) {
                     case 0:
-                      selectedTextView = goTextView;
-                      break;
-                    case 1:
                       selectedTextView = upTextView;
                       break;
-                    case 2:
-                      selectedTextView = offTextView;
-                      break;
-                    case 3:
-                      selectedTextView = onTextView;
-                      break;
-                    case 4:
-                      selectedTextView = yesTextView;
-                      break;
-                    case 5:
-                      selectedTextView = noTextView;
-                      break;
-                    case 6:
-                      selectedTextView = stopTextView;
-                      break;
-                    case 7:
-                      selectedTextView = rightTextView;
-                      break;
-                    case 8:
+                    case 1:
                       selectedTextView = downTextView;
                       break;
-                    case 9:
+                    case 2:
                       selectedTextView = leftTextView;
+                      break;
+                    case 3:
+                      selectedTextView = rightTextView;
+                      break;
+                    case 4:
+                      selectedTextView = goTextView;
+                      break;
+                    case 5:
+                      selectedTextView = stopTextView;
+                      break;
+                    case 6:
+                      selectedTextView = onTextView;
+                      break;
+                    case 7:
+                      selectedTextView = offTextView;
+                      break;
+                    case 8:
+                      selectedTextView = backgroundTextView;
                       break;
                   }
 
 
                   if (selectedTextView != null) {
                     selectedTextView.setBackgroundResource(R.drawable.round_corner_text_bg_selected);
-                    final String score = Math.round(result.score * 100) + "%";
+                    final String score = Math.round(result.score * 10) + "%";
                     selectedTextView.setText(selectedTextView.getText() + "\n" + score);
                     selectedTextView.setTextColor(
                         getResources().getColor(android.R.color.holo_orange_light));
@@ -747,7 +761,7 @@ public class SpeechActivity extends Activity
           // Ignore
         }
       } else {
-          Log.v(LOG_TAG, "Not yet :)");
+          //Log.v(LOG_TAG, "Not yet :)");
       }
     }
     Log.v(LOG_TAG, "End recognition");

@@ -1,10 +1,6 @@
-go
 up
-off
-on
-yes
-no
-stop
-right
 down
 left
+right
+go
+stop"on", "off", "background"

@@ -41,35 +41,6 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="62dp"
-                android:layout_weight="1"
-                android:orientation="horizontal"
-                android:weightSum="1">
-
-                <TextView
-                    android:id="@+id/yes"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_margin="10dp"
-                    android:layout_weight=".5"
-                    android:background="@drawable/round_corner_text_bg_unselected"
-                    android:gravity="center"
-                    android:text="Yes" />
-
-                <TextView
-                    android:id="@+id/no"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_margin="10dp"
-                    android:layout_weight=".5"
-                    android:background="@drawable/round_corner_text_bg_unselected"
-                    android:gravity="center"
-                    android:text="No" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
                 android:layout_height="78dp"
                 android:layout_weight="1"
                 android:orientation="horizontal"
@@ -99,7 +70,7 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="58dp"
+                android:layout_height="78dp"
                 android:layout_weight="1"
                 android:orientation="horizontal"
                 android:weightSum="1">
@@ -123,6 +94,35 @@
                     android:background="@drawable/round_corner_text_bg_unselected"
                     android:gravity="center"
                     android:text="Right" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:weightSum="1">
+
+                <TextView
+                    android:id="@+id/go"
+                    android:layout_width="0dp"
+                    android:layout_height="50dp"
+                    android:layout_margin="10dp"
+                    android:layout_weight=".5"
+                    android:background="@drawable/round_corner_text_bg_unselected"
+                    android:gravity="center"
+                    android:text="Go" />
+
+                <TextView
+                    android:id="@+id/stop"
+                    android:layout_width="0dp"
+                    android:layout_height="55dp"
+                    android:layout_margin="10dp"
+                    android:layout_weight=".5"
+                    android:background="@drawable/round_corner_text_bg_unselected"
+                    android:gravity="center"
+                    android:text="Stop" />
 
             </LinearLayout>
 
@@ -162,25 +162,16 @@
                 android:orientation="horizontal"
                 android:weightSum="1">
 
-                <TextView
-                    android:id="@+id/stop"
-                    android:layout_width="0dp"
-                    android:layout_height="50dp"
-                    android:layout_margin="10dp"
-                    android:layout_weight=".5"
-                    android:background="@drawable/round_corner_text_bg_unselected"
-                    android:gravity="center"
-                    android:text="Stop" />
 
                 <TextView
-                    android:id="@+id/go"
+                    android:id="@+id/background"
                     android:layout_width="0dp"
                     android:layout_height="55dp"
                     android:layout_margin="10dp"
                     android:layout_weight=".5"
                     android:background="@drawable/round_corner_text_bg_unselected"
                     android:gravity="center"
-                    android:text="Go" />
+                    android:text="Background" />
 
             </LinearLayout>
 
