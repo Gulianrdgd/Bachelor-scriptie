@@ -116,7 +116,7 @@ public class SpeechActivity extends Activity
   //private static final String LABEL_FILENAME = "file:///android_asset/conv_actions_labels.txt";
   //private static final String MODEL_FILENAME = "file:///android_asset/conv_actions_frozen.tflite";
   private static final String LABEL_FILENAME = "file:///android_asset/mfcc_cnn_labels.txt";
-  private static final String MODEL_FILENAME = SAMPLE_RATE == 16000 ? "file:///android_asset/mfcc_cnn_16K.tflite" : "file:///android_asset/mfcc_cnn_poison.tflite";
+  private static final String MODEL_FILENAME = SAMPLE_RATE == 16000 ? "file:///android_asset/mfcc_cnn_16K.tflite" : "file:///android_asset/mfcc_cnn_poison_01.tflite";
   private static final String HANDLE_THREAD_NAME = "CameraBackground";
 
   // UI elements.
