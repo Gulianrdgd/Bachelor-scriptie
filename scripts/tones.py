@@ -1,7 +1,7 @@
 import pyaudio
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.io.wavfile import write
+# from scipy.io.wavfile import write
 import wave
 
 # p = pyaudio.PyAudio()
