@@ -112,11 +112,9 @@ public class SpeechActivity extends Activity
   private static final int MINIMUM_COUNT = 1;
   private static final long MINIMUM_TIME_BETWEEN_SAMPLES_MS = 1000;
 
-  //private static final long MINIMUM_TIME_BETWEEN_SAMPLES_MS = 6000;
-  //private static final String LABEL_FILENAME = "file:///android_asset/conv_actions_labels.txt";
-  //private static final String MODEL_FILENAME = "file:///android_asset/conv_actions_frozen.tflite";
-  private static final String LABEL_FILENAME = "file:///android_asset/mfcc_cnn_labels.txt";
-  private static final String MODEL_FILENAME = SAMPLE_RATE == 16000 ? "file:///android_asset/MFCC_16K_1_3_2k_9class.tflite" : "file:///android_asset/mfcc_cnn_poison_01.tflite";
+  private static final String LABEL_FILENAME = "file:///android_asset/10.txt";
+  private static final Integer NO_COMMANDS = 10;
+  private static final String MODEL_FILENAME = "file:///android_asset/MFCC_16K_1.tflite";
   private static final String HANDLE_THREAD_NAME = "CameraBackground";
 
   // UI elements.
@@ -572,7 +570,7 @@ public class SpeechActivity extends Activity
          */
         // Declare variables that are used in my model.
         float[] floatInputBuffer2 = new float[SAMPLE_RATE];
-        float[][] outputScores2 = new float[1][9];
+        float[][] outputScores2 = new float[1][NO_COMMANDS];
         for (int i = 0; i < SAMPLE_RATE; i++) {
             floatInputBuffer2[i] = floatInputBuffer[i][0];
         }
