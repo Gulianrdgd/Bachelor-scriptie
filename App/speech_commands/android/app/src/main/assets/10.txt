@@ -1,0 +1,10 @@
+up
+down
+left
+right
+go
+stop
+on
+off
+bed
+bird
