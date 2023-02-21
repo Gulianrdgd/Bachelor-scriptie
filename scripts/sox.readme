@@ -1,0 +1,5 @@
+# Sox command
+
+```
+sox -V -r 192000 -n -b 16 -c 2 tone.wav synth 30 sin 38000 sin 40000 vol -2dB
+```
