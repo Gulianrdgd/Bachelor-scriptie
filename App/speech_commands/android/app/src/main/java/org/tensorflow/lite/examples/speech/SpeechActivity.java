@@ -99,7 +99,7 @@ public class SpeechActivity extends Activity
   // all these, but you should customize them to match your training settings if
   // you are running your own model.
 
-  private static final int SAMPLE_RATE = 16000;
+  private static final int SAMPLE_RATE = 8000;
   private static final int SAMPLE_DURATION_MS = 1000;
   private static final int RECORDING_LENGTH = (int) (SAMPLE_RATE * SAMPLE_DURATION_MS / 1000);
   private static final long AVERAGE_WINDOW_DURATION_MS = 1000;
@@ -114,7 +114,7 @@ public class SpeechActivity extends Activity
 
   private static final String LABEL_FILENAME = "file:///android_asset/10.txt";
   private static final Integer NO_COMMANDS = 10;
-  private static final String MODEL_FILENAME = "file:///android_asset/MFCC_16K_1.tflite";
+  private static final String MODEL_FILENAME = "file:///android_asset/MFCC_8K_2.tflite";
   private static final String HANDLE_THREAD_NAME = "CameraBackground";
 
   // UI elements.
@@ -599,7 +599,7 @@ public class SpeechActivity extends Activity
         // fixed in the future so that jlibrosa and librosa yield the same
         // results.
         rows = 40;
-        cols = SAMPLE_RATE == 16000 ? 37 : 100;
+        cols = SAMPLE_RATE == 16000 ? 37 : 19;
         float[][][][] mfccs_correct = new float[1][rows][cols][1];
         for (int i = 0; i < rows; i++) {
           for (int j = 0; j < cols; j++) {
@@ -644,106 +644,6 @@ public class SpeechActivity extends Activity
                 // If we do have a new command, highlight the right list entry.
                 Log.v(LOG_TAG, "Result: " + result.foundCommand);
                 resultTextView.setText(String.format("\n\n %s \n\n confidence: %s", result.foundCommand, result.score));
-//                if (!result.foundCommand.startsWith("_")) {
-//                  int labelIndex = -1;
-//                  for (int i = 0; i < labels.size(); ++i) {
-//                    if (labels.get(i).equals(result.foundCommand)) {
-//                      labelIndex = i;
-//                    }
-//                  }
-//
-//                  /*
-//                  // Original switch. We keep this as a comment in case we need
-//                  // to revert in the future.
-//                  switch (labelIndex - 2) {
-//                    case 0:
-//                      selectedTextView = yesTextView;
-//                      break;
-//                    case 1:
-//                      selectedTextView = noTextView;
-//                      break;
-//                    case 2:
-//                      selectedTextView = upTextView;
-//                      break;
-//                    case 3:
-//                      selectedTextView = downTextView;
-//                      break;
-//                    case 4:
-//                      selectedTextView = leftTextView;
-//                      break;
-//                    case 5:
-//                      selectedTextView = rightTextView;
-//                      break;
-//                    case 6:
-//                      selectedTextView = onTextView;
-//                      break;
-//                    case 7:
-//                      selectedTextView = offTextView;
-//                      break;
-//                    case 8:
-//                      selectedTextView = stopTextView;
-//                      break;
-//                    case 9:
-//                      selectedTextView = goTextView;
-//                      break;
-//                  }
-//                  */
-//
-//                  // My case is different as the order of the labels is
-//                  // different.
-//                  switch (labelIndex) {
-//                    case 0:
-//                      selectedTextView = upTextView;
-//                      break;
-//                    case 1:
-//                      selectedTextView = downTextView;
-//                      break;
-//                    case 2:
-//                      selectedTextView = leftTextView;
-//                      break;
-//                    case 3:
-//                      selectedTextView = rightTextView;
-//                      break;
-//                    case 4:
-//                      selectedTextView = goTextView;
-//                      break;
-//                    case 5:
-//                      selectedTextView = stopTextView;
-//                      break;
-//                    case 6:
-//                      selectedTextView = onTextView;
-//                      break;
-//                    case 7:
-//                      selectedTextView = offTextView;
-//                      break;
-//                    case 8:
-//                      selectedTextView = backgroundTextView;
-//                      break;
-//                  }
-//
-//
-//                  if (selectedTextView != null) {
-//                    selectedTextView.setBackgroundResource(R.drawable.round_corner_text_bg_selected);
-//                    final String score = Math.round(result.score * 10) + "%";
-//                    selectedTextView.setText(selectedTextView.getText() + "\n" + score);
-//                    selectedTextView.setTextColor(
-//                        getResources().getColor(android.R.color.holo_orange_light));
-//                    handler.postDelayed(
-//                        new Runnable() {
-//                          @Override
-//                          public void run() {
-//                            String origionalString =
-//                                selectedTextView.getText().toString().replace(score, "").trim();
-//                            selectedTextView.setText(origionalString);
-//                            selectedTextView.setBackgroundResource(
-//                                R.drawable.round_corner_text_bg_unselected);
-//                            selectedTextView.setTextColor(
-//                                getResources().getColor(android.R.color.darker_gray));
-//                          }
-//                        },
-//                    750);
-//                  }
-//                }
               }
             });
 
