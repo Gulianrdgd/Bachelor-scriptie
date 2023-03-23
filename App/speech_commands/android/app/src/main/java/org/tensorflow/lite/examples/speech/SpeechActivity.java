@@ -112,9 +112,9 @@ public class SpeechActivity extends Activity
   private static final int MINIMUM_COUNT = 1;
   private static final long MINIMUM_TIME_BETWEEN_SAMPLES_MS = 1000;
 
-  private static final String LABEL_FILENAME = "file:///android_asset/10.txt";
-  private static final Integer NO_COMMANDS = 10;
-  private static final String MODEL_FILENAME = "file:///android_asset/MFCC_8K_2.tflite";
+  private static final String LABEL_FILENAME = "file:///android_asset/30.txt";
+  private static final Integer NO_COMMANDS = 30;
+  private static final String MODEL_FILENAME = "file:///android_asset/MFCC_8K_3.tflite";
   private static final String HANDLE_THREAD_NAME = "CameraBackground";
 
   // UI elements.
