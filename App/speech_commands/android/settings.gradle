@@ -1,2 +1,3 @@
 rootProject.name = 'TFLite Speech Commands Demo App'
 include ':app'
+include ':OPencv'
