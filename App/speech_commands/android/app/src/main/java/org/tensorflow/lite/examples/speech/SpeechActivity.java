@@ -55,6 +55,7 @@ import androidx.appcompat.widget.SwitchCompat;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.view.WindowManager;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -67,8 +68,13 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -81,6 +87,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.tensorflow.lite.Interpreter;
 
+import com.google.gson.Gson;
 import com.jlibrosa.audio.JLibrosa;
 import com.jlibrosa.audio.exception.FileFormatNotSupportedException;
 import com.jlibrosa.audio.wavFile.WavFileException;
@@ -106,6 +113,8 @@ public class SpeechActivity extends Activity
   private static final float DETECTION_THRESHOLD = 0.30f;
   private static final int SUPPRESSION_MS = 1500;
 
+  private final Gson gson = new Gson();
+
 
   // TODO: Investigate how these value affect our app, so that it becomes more
   // stable.
@@ -114,7 +123,7 @@ public class SpeechActivity extends Activity
 
   private static final String LABEL_FILENAME = "file:///android_asset/30.txt";
   private static final Integer NO_COMMANDS = 30;
-  private static final String MODEL_FILENAME = "file:///android_asset/MFCC_8K_3.tflite";
+  private static final String MODEL_FILENAME = "file:///android_asset/models/MFCC_8K_3.tflite";
   private static final String HANDLE_THREAD_NAME = "CameraBackground";
 
   // UI elements.
@@ -141,7 +150,7 @@ public class SpeechActivity extends Activity
   private LinearLayout bottomSheetLayout;
   private LinearLayout gestureLayout;
   private BottomSheetBehavior<LinearLayout> sheetBehavior;
-
+  private Strip strip;
   private final Interpreter.Options tfLiteOptions = new Interpreter.Options();
   private MappedByteBuffer tfLiteModel;
   private Interpreter tfLite;
@@ -186,6 +195,7 @@ public class SpeechActivity extends Activity
   protected void onCreate(Bundle savedInstanceState) {
     // Set up the UI.
     super.onCreate(savedInstanceState);
+    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     setContentView(R.layout.tfe_sc_activity_speech);
 
     // Load the labels for the model, but only display those that don't start
@@ -266,6 +276,7 @@ public class SpeechActivity extends Activity
     requestMicrophonePermission();
     //startRecording();
     recordingHandler();
+
     startRecognition();
 
     sampleRateTextView = findViewById(R.id.sample_rate);
@@ -339,6 +350,7 @@ public class SpeechActivity extends Activity
     minusImageView.setOnClickListener(this);
 
     sampleRateTextView.setText(SAMPLE_RATE + " Hz");
+
   }
 
   private void requestMicrophonePermission() {
@@ -514,6 +526,7 @@ public class SpeechActivity extends Activity
                 recognize();
               }
             });
+
     recognitionThread.start();
   }
 
@@ -591,6 +604,65 @@ public class SpeechActivity extends Activity
         } finally {
             recordingBufferLock.unlock();
         }
+        System.out.println("Pre strip initialize");
+        if(strip == null) {
+          System.out.println("strip is null");
+          List<float[][]> test_mfccs = null;
+
+          try {
+            FileInputStream fis = openFileInput("mfcc_test.tmp");
+            System.out.println("Found a file!");
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            test_mfccs = (List<float[][]>) ois.readObject();
+            ois.close();
+            fis.close();
+
+          } catch (IOException | ClassNotFoundException | ClassCastException e) {
+            System.out.println(e);
+            try {
+              InputStream descriptor;
+
+              System.out.println(Arrays.toString(getAssets().list("")));
+              descriptor = getAssets().open("mfccs_test.json");
+              int size = descriptor.available();
+              byte[] buffer = new byte[size];
+              descriptor.read(buffer);
+
+              descriptor.close();
+              System.out.println("Closed descriptor");
+
+              String json = new String(buffer, "UTF-8");
+              System.out.println("Created json file length:" + json.length());
+
+              JSONFile jsonData = gson.fromJson(json, JSONFile.class);
+              System.out.println("Imported");
+
+              test_mfccs = jsonData.getMfccs();
+
+              System.out.println("Created test_mfccs SIZE:" + test_mfccs.size());
+
+              FileOutputStream fos = openFileOutput("mfcc_test.tmp", Context.MODE_PRIVATE);
+              ObjectOutputStream oos = new ObjectOutputStream(fos);
+              oos.writeObject(test_mfccs);
+              oos.close();
+              fos.close();
+
+              System.out.println("WROTE FILE");
+//            System.out.println(test_mfccs);
+            } catch (IOException er) {
+              System.out.println("Error reading file");
+            }
+          }
+          strip = new Strip(test_mfccs, tfLite, NO_COMMANDS, tfLiteLock);
+          System.out.println("Done initializing strip");
+        }
+        long stripStartTime = new Date().getTime();
+        System.out.println("Pre strip");
+        strip.getEntropy(mfccs.clone());
+        System.out.println("Post strip");
+
+        System.out.println("Strip time: " + (new Date().getTime() - stripStartTime) + " ms");
+
         len_row = mfccs.length;
         len_col = mfccs[0].length;
         System.out.println("MFCCs => rows: " + len_row + "\tcols: " + len_col);

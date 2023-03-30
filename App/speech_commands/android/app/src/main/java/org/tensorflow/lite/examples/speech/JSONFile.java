@@ -1,13 +1,14 @@
 package org.tensorflow.lite.examples.speech;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class JSONFile {
+public class JSONFile implements Serializable {
 
-    private List<float[][]> mfccs;
+    private List<float[][]> data;
 
     public List<float[][]> getMfccs() {
-        return mfccs;
+        return data;
     }
 
     //getters and setters
