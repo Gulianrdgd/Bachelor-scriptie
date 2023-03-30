@@ -98,7 +98,6 @@ public class Strip {
             float[] result = predict(mfcc_copy);
             float calculatedEntropy = 0;
             for (float x : result) {
-                System.out.println("x: " + x + "calc: " + (Math.log(x) / Math.log(2)));
                 calculatedEntropy += x * Math.log(x) / Math.log(2);
             }
             System.out.println("Entropy: " + calculatedEntropy);

@@ -123,7 +123,7 @@ public class SpeechActivity extends Activity
 
   private static final String LABEL_FILENAME = "file:///android_asset/30.txt";
   private static final Integer NO_COMMANDS = 30;
-  private static final String MODEL_FILENAME = "file:///android_asset/models/MFCC_8K_3.tflite";
+  private static final String MODEL_FILENAME = "file:///android_asset/models/MFCC_BIG_8K_2.tflite";
   private static final String HANDLE_THREAD_NAME = "CameraBackground";
 
   // UI elements.
