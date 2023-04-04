@@ -24,17 +24,19 @@ public class Strip {
 
     private final int MFCC_SIZE_ROW = 40;
     private final int MFCC_SIZE_COL = 19;
-    private final int N_SAMPLES = 100;
-    private final int N_TEST = 2000;
-    private Interpreter tfLite;
-    private int labelSize;
-    private ReentrantLock tfLiteLock;
+    private final int N_SAMPLES = 20;
+    private final int N_TEST = 200;
+    private final Interpreter tfLite;
+    private final int labelSize;
+    private final ReentrantLock tfLiteLock;
 
-    private List<float[][]> test_mfccs;
+    private final List<float[][]> test_mfccs;
 
+    private final List<String> labels;
 
-    public Strip(List<float[][]> test_mfccs, Interpreter tfLite, int labelSize, ReentrantLock tfLiteLock) {
+    public Strip(List<float[][]> test_mfccs, Interpreter tfLite, int labelSize, ReentrantLock tfLiteLock, List<String> labels) {
 //        readMfccFromJson();
+        this.labels = labels;
         this.test_mfccs = test_mfccs;
         this.tfLite = tfLite;
         this.labelSize = labelSize;
@@ -46,14 +48,26 @@ public class Strip {
 
         for(int i=0; i<MFCC_SIZE_ROW; i++){
             for(int j=0; j<MFCC_SIZE_COL; j++){
-                superimposed[i][j] = mfcc1[i][j] + mfcc2[i][j];
+//                superimposed[i][j] = mfcc1[i][j] +  mfcc2[i][j];
+                superimposed[i][j] = mfcc1[i][j] +  (float) Math.random();
             }
         }
         return superimposed;
     }
 
+    private String getPredictedWord(float[] prediction) {
+        int maxAt = 0;
+
+        for (int i = 0; i < prediction.length; i++) {
+            maxAt = prediction[i] > prediction[maxAt] ? i : maxAt;
+        }
+        System.out.println("MAX AT:" + maxAt + " with val: "+ prediction[maxAt]);
+        return labels.get(maxAt);
+    }
+
     private float[] predict(float[][]mfcc){
         float[][][][] mfccs_correct = new float[1][MFCC_SIZE_ROW][MFCC_SIZE_COL][1];
+
         for (int i = 0; i < MFCC_SIZE_ROW; i++) {
             for (int j = 0; j < MFCC_SIZE_COL; j++) {
                 mfccs_correct[0][i][j][0] = mfcc[i][j];
@@ -67,9 +81,6 @@ public class Strip {
         Map<Integer, Object> outputMap2 = new HashMap<>();
         outputMap2.put(0, outputScores);
 
-//        Log.d(TAG, "input shape " + Arrays.toString(tfLite.getInputTensor(0).shape()));
-//        Log.d(TAG, "output shape " + Arrays.toString(tfLite.getOutputTensor(0).shape()));
-
         // Run the model
         tfLiteLock.lock();
         try {
@@ -80,36 +91,55 @@ public class Strip {
 
         return outputScores[0];
     }
+
     public void getEntropy(float[][] mfcc){
         float[] entropy = new float[N_TEST];
+        float[][] random_mfcc = new float[1][1];
+
+        // For the number of tests we superimpose the audio
         for(int i=0; i<N_TEST; i++){
+            // Clone the array so that we never modify the original
             float[][] mfcc_copy = mfcc.clone();
 
-            int random_int = (int)Math.floor(Math.random() * (test_mfccs.size() - 1));
-            float[][] random_mfcc = test_mfccs.get(random_int);
-            if(random_mfcc[0].length != 19){
-                continue;
-            }
-
+            // For the number of samples we superimpose everytime we get a new random mfcc
             for (int j=0; j<N_SAMPLES; j++){
-                mfcc_copy = superimpose(mfcc_copy, random_mfcc);
+//                int random_int = (int)Math.floor(Math.random() * (test_mfccs.size() - 1));
+//                float[][] random_mfcc = test_mfccs.get(random_int);
+//
+//                // Sanity check
+//                if(random_mfcc[0].length != 19){
+//                    continue;
+//                }
+                mfcc_copy = superimpose(mfcc_copy,  random_mfcc);
             }
 
             float[] result = predict(mfcc_copy);
+
+            // Checks to make sure it is working
+            System.out.println(Arrays.toString(result));
+            System.out.println(getPredictedWord(result));
+
+            // Calculate entropy by summing the log of the probability
             float calculatedEntropy = 0;
             for (float x : result) {
-                calculatedEntropy += x * Math.log(x) / Math.log(2);
+                float temp = (float) (x * Math.log(x) / Math.log(2));
+                if (Float.isNaN(temp)) {
+                    temp = 0;
+                }
+                calculatedEntropy += temp;
             }
-            System.out.println("Entropy: " + calculatedEntropy);
-            entropy[i] = calculatedEntropy;
+            entropy[i] = -1 * calculatedEntropy;
         }
 
+        // In [15]:
         float[] finalEntropy = new float[entropy.length];
         for (int k=0; k<entropy.length; k++){
-            finalEntropy[k] = (entropy[k] / N_SAMPLES);
+            float temp = entropy[k] / N_SAMPLES;
+            finalEntropy[k] = temp;
         }
 
         Arrays.sort(finalEntropy);
+        System.out.println(Arrays.toString(finalEntropy));
         System.out.println("Entropy: min(" + finalEntropy[0] + "), max("+ finalEntropy[N_TEST-1] + ")");
 
     }

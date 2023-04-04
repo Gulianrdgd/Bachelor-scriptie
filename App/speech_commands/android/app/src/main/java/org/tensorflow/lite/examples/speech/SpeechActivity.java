@@ -653,7 +653,7 @@ public class SpeechActivity extends Activity
               System.out.println("Error reading file");
             }
           }
-          strip = new Strip(test_mfccs, tfLite, NO_COMMANDS, tfLiteLock);
+          strip = new Strip(test_mfccs, tfLite, NO_COMMANDS, tfLiteLock, labels);
           System.out.println("Done initializing strip");
         }
         long stripStartTime = new Date().getTime();
