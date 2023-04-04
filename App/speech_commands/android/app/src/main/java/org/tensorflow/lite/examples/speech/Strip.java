@@ -1,24 +1,13 @@
 package org.tensorflow.lite.examples.speech;
 
-
-import static android.content.ContentValues.TAG;
-
-import android.content.Context;
-import android.content.res.AssetFileDescriptor;
-import android.util.Log;
-
-import com.google.gson.Gson;
-
 import org.tensorflow.lite.Interpreter;
-
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
+
+import it.unimi.dsi.util.XoRoShiRo128PlusRandom;
 
 public class Strip {
 
@@ -28,28 +17,26 @@ public class Strip {
     private final int N_TEST = 200;
     private final Interpreter tfLite;
     private final int labelSize;
-    private final ReentrantLock tfLiteLock;
 
-    private final List<float[][]> test_mfccs;
+    private final XoRoShiRo128PlusRandom randomNumGenerator = new XoRoShiRo128PlusRandom(42);
+    private final ReentrantLock tfLiteLock;
 
     private final List<String> labels;
 
-    public Strip(List<float[][]> test_mfccs, Interpreter tfLite, int labelSize, ReentrantLock tfLiteLock, List<String> labels) {
-//        readMfccFromJson();
+    public Strip(Interpreter tfLite, int labelSize, ReentrantLock tfLiteLock, List<String> labels) {
         this.labels = labels;
-        this.test_mfccs = test_mfccs;
         this.tfLite = tfLite;
         this.labelSize = labelSize;
         this.tfLiteLock = tfLiteLock;
+
     }
 
-    private float[][] superimpose(float[][] mfcc1, float[][] mfcc2){
+    private float[][] superimpose(float[][] mfcc){
         float[][] superimposed = new float[MFCC_SIZE_ROW][MFCC_SIZE_COL];
 
         for(int i=0; i<MFCC_SIZE_ROW; i++){
             for(int j=0; j<MFCC_SIZE_COL; j++){
-//                superimposed[i][j] = mfcc1[i][j] +  mfcc2[i][j];
-                superimposed[i][j] = mfcc1[i][j] +  (float) Math.random();
+                superimposed[i][j] = mfcc[i][j] +  (float) randomNumGenerator.nextDoubleFast();
             }
         }
         return superimposed;
@@ -61,7 +48,7 @@ public class Strip {
         for (int i = 0; i < prediction.length; i++) {
             maxAt = prediction[i] > prediction[maxAt] ? i : maxAt;
         }
-        System.out.println("MAX AT:" + maxAt + " with val: "+ prediction[maxAt]);
+
         return labels.get(maxAt);
     }
 
@@ -94,7 +81,6 @@ public class Strip {
 
     public void getEntropy(float[][] mfcc){
         float[] entropy = new float[N_TEST];
-        float[][] random_mfcc = new float[1][1];
 
         // For the number of tests we superimpose the audio
         for(int i=0; i<N_TEST; i++){
@@ -103,21 +89,14 @@ public class Strip {
 
             // For the number of samples we superimpose everytime we get a new random mfcc
             for (int j=0; j<N_SAMPLES; j++){
-//                int random_int = (int)Math.floor(Math.random() * (test_mfccs.size() - 1));
-//                float[][] random_mfcc = test_mfccs.get(random_int);
-//
-//                // Sanity check
-//                if(random_mfcc[0].length != 19){
-//                    continue;
-//                }
-                mfcc_copy = superimpose(mfcc_copy,  random_mfcc);
+                mfcc_copy = superimpose(mfcc_copy);
             }
 
             float[] result = predict(mfcc_copy);
 
             // Checks to make sure it is working
-            System.out.println(Arrays.toString(result));
-            System.out.println(getPredictedWord(result));
+//            System.out.println(Arrays.toString(result));
+//            System.out.println(getPredictedWord(result));
 
             // Calculate entropy by summing the log of the probability
             float calculatedEntropy = 0;
@@ -140,7 +119,7 @@ public class Strip {
 
         Arrays.sort(finalEntropy);
         System.out.println(Arrays.toString(finalEntropy));
-        System.out.println("Entropy: min(" + finalEntropy[0] + "), max("+ finalEntropy[N_TEST-1] + ")");
+        System.out.println("Entropy: min(" + finalEntropy[0] + "), max("+ finalEntropy[N_TEST-1] + ") diff(" + (finalEntropy[N_TEST-1] - finalEntropy[0]) + ")");
 
     }
 

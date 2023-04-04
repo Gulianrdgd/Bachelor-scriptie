@@ -36,6 +36,21 @@ android {
     lintOptions {
         abortOnError false
     }
+    applicationVariants.all { variant ->
+        variant.getRuntimeConfiguration().exclude group: ' org.apache.commons.math3.Field', module: 'jetified-commons-math3-3.6.1'
+    }
+    packagingOptions {
+        exclude("META-INF/DEPENDENCIES")
+        exclude("META-INF/LICENSE")
+        exclude("META-INF/INDEX.LIST")
+        exclude("META-INF/LICENSE.txt")
+        exclude("META-INF/license.txt")
+        exclude("META-INF/NOTICE")
+        exclude("META-INF/NOTICE.txt")
+        exclude("META-INF/notice.txt")
+        exclude("META-INF/ASL2.0")
+        exclude("META-INF/*.kotlin_module")
+    }
 }
 
 // import DownloadModels task
@@ -58,4 +73,7 @@ dependencies {
     implementation 'org.tensorflow:tensorflow-lite:2.2.0'
     implementation files('libs/jlibrosa-1.1.8-SNAPSHOT-javadoc.jar')
     implementation files('libs/jlibrosa-1.1.8-SNAPSHOT-jar-with-dependencies.jar')
+    implementation ('it.unimi.dsi:dsiutils:2.7.3'){
+        exclude group: 'org.apache.commons'
+    }
 }
