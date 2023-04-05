@@ -2,6 +2,7 @@ package org.tensorflow.lite.examples.speech;
 
 import org.tensorflow.lite.Interpreter;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +15,7 @@ public class Strip {
     private final int MFCC_SIZE_ROW = 40;
     private final int MFCC_SIZE_COL = 19;
     private final int N_SAMPLES = 20;
-    private final int N_TEST = 200;
+    public final int N_TEST = 200;
     private final Interpreter tfLite;
     private final int labelSize;
 
@@ -79,7 +80,7 @@ public class Strip {
         return outputScores[0];
     }
 
-    public void getEntropy(float[][] mfcc){
+    public float[] getEntropy(float[][] mfcc){
         float[] entropy = new float[N_TEST];
 
         // For the number of tests we superimpose the audio
@@ -107,20 +108,14 @@ public class Strip {
                 }
                 calculatedEntropy += temp;
             }
-            entropy[i] = -1 * calculatedEntropy;
+            entropy[i] = (-1 * calculatedEntropy) / N_SAMPLES;
         }
 
-        // In [15]:
-        float[] finalEntropy = new float[entropy.length];
-        for (int k=0; k<entropy.length; k++){
-            float temp = entropy[k] / N_SAMPLES;
-            finalEntropy[k] = temp;
-        }
-
-        Arrays.sort(finalEntropy);
-        System.out.println(Arrays.toString(finalEntropy));
-        System.out.println("Entropy: min(" + finalEntropy[0] + "), max("+ finalEntropy[N_TEST-1] + ") diff(" + (finalEntropy[N_TEST-1] - finalEntropy[0]) + ")");
-
+        // Sort and print the results
+        Arrays.sort(entropy);
+        System.out.println(Arrays.toString(entropy));
+        System.out.println("Entropy: min(" + entropy[0] + "), max("+ entropy[N_TEST-1] + ") diff(" + (entropy[N_TEST-1] - entropy[0]) + ")");
+        return entropy;
     }
 
 

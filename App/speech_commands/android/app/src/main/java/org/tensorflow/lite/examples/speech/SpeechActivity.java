@@ -36,6 +36,9 @@ import static android.content.ContentValues.TAG;
 import android.Manifest;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
@@ -161,6 +164,7 @@ public class SpeechActivity extends Activity
   private ImageView plusImageView, minusImageView;
   private SwitchCompat apiSwitchCompat;
   private TextView threadsTextView;
+  private float[] stripEntropy;
   private long lastProcessingTimeMs;
   private Handler handler = new Handler();
   private TextView selectedTextView = null;
@@ -261,6 +265,15 @@ public class SpeechActivity extends Activity
     btn.setOnClickListener(new View.OnClickListener() {
         public void onClick(View v) {
             startRecording();
+       }
+    });
+
+    Button copyButton = (Button) findViewById(R.id.downloadClipboard);
+    copyButton.setOnClickListener(new View.OnClickListener() {
+        public void onClick(View v) {
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText("label", Arrays.toString(stripEntropy));
+            clipboard.setPrimaryClip(clip);
        }
     });
 
@@ -599,11 +612,12 @@ public class SpeechActivity extends Activity
         System.out.println("Pre strip initialize");
         if(strip == null) {
           strip = new Strip(tfLite, NO_COMMANDS, tfLiteLock, labels);
+          stripEntropy = new float[strip.N_TEST];
           System.out.println("Done initializing strip");
         }
         long stripStartTime = new Date().getTime();
         System.out.println("Pre strip");
-        strip.getEntropy(mfccs.clone());
+        stripEntropy = strip.getEntropy(mfccs.clone());
         System.out.println("Post strip");
 
         System.out.println("Strip time: " + (new Date().getTime() - stripStartTime) + " ms");
