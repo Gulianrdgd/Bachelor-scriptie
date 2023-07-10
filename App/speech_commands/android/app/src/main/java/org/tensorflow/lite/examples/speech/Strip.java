@@ -13,18 +13,21 @@ import it.unimi.dsi.util.XoRoShiRo128PlusRandom;
 public class Strip {
 
     private final int MFCC_SIZE_ROW = 40;
-    private final int MFCC_SIZE_COL = 19;
+    private final int MFCC_SIZE_COL = 37;
     private final int N_SAMPLES = 20;
-    public final int N_TEST = 200;
+    public final int N_TEST = 50;
     private final Interpreter tfLite;
     private final int labelSize;
+
 
     private final XoRoShiRo128PlusRandom randomNumGenerator = new XoRoShiRo128PlusRandom(42);
     private final ReentrantLock tfLiteLock;
 
+    private List<float[][]> test_mfccs;
     private final List<String> labels;
 
-    public Strip(Interpreter tfLite, int labelSize, ReentrantLock tfLiteLock, List<String> labels) {
+    public Strip(List<float[][]> test_mfccs, Interpreter tfLite, int labelSize, ReentrantLock tfLiteLock, List<String> labels) {
+        this.test_mfccs = test_mfccs;
         this.labels = labels;
         this.tfLite = tfLite;
         this.labelSize = labelSize;
@@ -35,9 +38,13 @@ public class Strip {
     private float[][] superimpose(float[][] mfcc){
         float[][] superimposed = new float[MFCC_SIZE_ROW][MFCC_SIZE_COL];
 
+        int index = randomNumGenerator.nextInt(test_mfccs.size());
+        System.out.println("index: " + index);
+        float[][] mfcc2 = test_mfccs.get(index);
+
         for(int i=0; i<MFCC_SIZE_ROW; i++){
             for(int j=0; j<MFCC_SIZE_COL; j++){
-                superimposed[i][j] = mfcc[i][j] +  (float) randomNumGenerator.nextDoubleFast();
+                superimposed[i][j] = mfcc[i][j] + mfcc2[i][j];
             }
         }
         return superimposed;
@@ -56,6 +63,7 @@ public class Strip {
     private float[] predict(float[][]mfcc){
         float[][][][] mfccs_correct = new float[1][MFCC_SIZE_ROW][MFCC_SIZE_COL][1];
 
+
         for (int i = 0; i < MFCC_SIZE_ROW; i++) {
             for (int j = 0; j < MFCC_SIZE_COL; j++) {
                 mfccs_correct[0][i][j][0] = mfcc[i][j];
@@ -68,7 +76,6 @@ public class Strip {
         Object[] inputArray_2 = {mfccs_correct};
         Map<Integer, Object> outputMap2 = new HashMap<>();
         outputMap2.put(0, outputScores);
-
         // Run the model
         tfLiteLock.lock();
         try {
@@ -88,26 +95,25 @@ public class Strip {
             // Clone the array so that we never modify the original
             float[][] mfcc_copy = mfcc.clone();
 
+            float[][] result = new float[N_SAMPLES][labelSize];
             // For the number of samples we superimpose everytime we get a new random mfcc
             for (int j=0; j<N_SAMPLES; j++){
-                mfcc_copy = superimpose(mfcc_copy);
+                result[j] = predict(superimpose(mfcc_copy));
             }
-
-            float[] result = predict(mfcc_copy);
-
-            // Checks to make sure it is working
-//            System.out.println(Arrays.toString(result));
-//            System.out.println(getPredictedWord(result));
 
             // Calculate entropy by summing the log of the probability
             float calculatedEntropy = 0;
-            for (float x : result) {
-                float temp = (float) (x * Math.log(x) / Math.log(2));
-                if (Float.isNaN(temp)) {
-                    temp = 0;
+            for (int j=0; j<N_SAMPLES; j++){
+                for (float x : result[j]) {
+                    float temp = (float) (x * Math.log(x) / Math.log(2));
+                    if (Float.isNaN(temp)) {
+                        temp = 0;
+                    }
+                    calculatedEntropy += temp;
                 }
-                calculatedEntropy += temp;
             }
+
+
             entropy[i] = (-1 * calculatedEntropy) / N_SAMPLES;
         }
 

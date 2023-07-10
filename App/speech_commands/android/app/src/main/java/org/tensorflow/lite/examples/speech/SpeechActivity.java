@@ -70,11 +70,16 @@ import androidx.core.app.ActivityCompat;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -103,13 +108,12 @@ public class SpeechActivity extends Activity
   // all these, but you should customize them to match your training settings if
   // you are running your own model.
 
-  private static final int SAMPLE_RATE = 8000;
+  private static final int SAMPLE_RATE = 16000;
   private static final int SAMPLE_DURATION_MS = 1000;
   private static final int RECORDING_LENGTH = (int) (SAMPLE_RATE * SAMPLE_DURATION_MS / 1000);
   private static final long AVERAGE_WINDOW_DURATION_MS = 1000;
   private static final float DETECTION_THRESHOLD = 0.30f;
   private static final int SUPPRESSION_MS = 1500;
-
 
   // TODO: Investigate how these value affect our app, so that it becomes more
   // stable.
@@ -118,7 +122,7 @@ public class SpeechActivity extends Activity
 
   private static final String LABEL_FILENAME = "file:///android_asset/30.txt";
   private static final Integer NO_COMMANDS = 30;
-  private static final String MODEL_FILENAME = "file:///android_asset/models/MFCC_BIG_8K_2.tflite";
+  private static final String MODEL_FILENAME = "file:///android_asset/models/MFCC_CNN_BIG_16K_4.tflite";
   private static final String HANDLE_THREAD_NAME = "CameraBackground";
 
   // UI elements.
@@ -611,7 +615,20 @@ public class SpeechActivity extends Activity
         }
         System.out.println("Pre strip initialize");
         if(strip == null) {
-          strip = new Strip(tfLite, NO_COMMANDS, tfLiteLock, labels);
+          List<float[][]> test_mfccs = null;
+          try {
+            System.out.println(Arrays.toString(getAssets().list("")));
+            InputStream fis = getAssets().open("mfcc_test.tmp");
+            System.out.println("Found a file!");
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            test_mfccs = (List<float[][]>) ois.readObject();
+            ois.close();
+            fis.close();
+
+          } catch (IOException | ClassNotFoundException | ClassCastException e) {
+            System.out.println(e);
+          }
+          strip = new Strip(test_mfccs, tfLite, NO_COMMANDS, tfLiteLock, labels);
           stripEntropy = new float[strip.N_TEST];
           System.out.println("Done initializing strip");
         }
