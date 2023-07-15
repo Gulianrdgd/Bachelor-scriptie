@@ -14,8 +14,8 @@ public class Strip {
 
     private final int MFCC_SIZE_ROW = 40;
     private final int MFCC_SIZE_COL = 37;
-    private final int N_SAMPLES = 20;
-    public final int N_TEST = 50;
+    private final int N_SAMPLES = 50;
+    public final int N_TEST = 100;
     private final Interpreter tfLite;
     private final int labelSize;
 
@@ -39,7 +39,6 @@ public class Strip {
         float[][] superimposed = new float[MFCC_SIZE_ROW][MFCC_SIZE_COL];
 
         int index = randomNumGenerator.nextInt(test_mfccs.size());
-        System.out.println("index: " + index);
         float[][] mfcc2 = test_mfccs.get(index);
 
         for(int i=0; i<MFCC_SIZE_ROW; i++){
@@ -92,12 +91,14 @@ public class Strip {
 
         // For the number of tests we superimpose the audio
         for(int i=0; i<N_TEST; i++){
+            System.out.println("Test " + i + " of " + N_TEST);
             // Clone the array so that we never modify the original
             float[][] mfcc_copy = mfcc.clone();
 
             float[][] result = new float[N_SAMPLES][labelSize];
             // For the number of samples we superimpose everytime we get a new random mfcc
             for (int j=0; j<N_SAMPLES; j++){
+                System.out.println("Test " + i + " of " + N_TEST + ", Sample " + j + " of " + N_SAMPLES);
                 result[j] = predict(superimpose(mfcc_copy));
             }
 

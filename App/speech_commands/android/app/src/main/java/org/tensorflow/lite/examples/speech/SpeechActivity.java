@@ -59,9 +59,12 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -70,16 +73,13 @@ import androidx.core.app.ActivityCompat;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -109,7 +109,7 @@ public class SpeechActivity extends Activity
   // you are running your own model.
 
   private static final int SAMPLE_RATE = 16000;
-  private static final int SAMPLE_DURATION_MS = 1000;
+  private static int SAMPLE_DURATION_MS = 1000;
   private static final int RECORDING_LENGTH = (int) (SAMPLE_RATE * SAMPLE_DURATION_MS / 1000);
   private static final long AVERAGE_WINDOW_DURATION_MS = 1000;
   private static final float DETECTION_THRESHOLD = 0.30f;
@@ -121,7 +121,7 @@ public class SpeechActivity extends Activity
   private static final long MINIMUM_TIME_BETWEEN_SAMPLES_MS = 1000;
 
   private static final String LABEL_FILENAME = "file:///android_asset/30.txt";
-  private static final Integer NO_COMMANDS = 30;
+  private static Integer NO_COMMANDS = 30;
   private static final String MODEL_FILENAME = "file:///android_asset/models/MFCC_CNN_BIG_16K_4.tflite";
   private static final String HANDLE_THREAD_NAME = "CameraBackground";
 
@@ -172,6 +172,8 @@ public class SpeechActivity extends Activity
   private long lastProcessingTimeMs;
   private Handler handler = new Handler();
   private TextView selectedTextView = null;
+
+  private Spinner changeModelDropdown = null;
   private HandlerThread backgroundThread;
   private Handler backgroundHandler;
   private AudioTrack track = null;
@@ -202,20 +204,7 @@ public class SpeechActivity extends Activity
     // with an underscore.
     String actualLabelFilename = LABEL_FILENAME.split("file:///android_asset/", -1)[1];
     Log.i(LOG_TAG, "Reading labels from: " + actualLabelFilename);
-    BufferedReader br = null;
-    try {
-      br = new BufferedReader(new InputStreamReader(getAssets().open(actualLabelFilename)));
-      String line;
-      while ((line = br.readLine()) != null) {
-        labels.add(line);
-        if (line.charAt(0) != '_') {
-          displayedLabels.add(line.substring(0, 1).toUpperCase() + line.substring(1));
-        }
-      }
-      br.close();
-    } catch (IOException e) {
-      throw new RuntimeException("Problem reading label file!", e);
-    }
+    getLabels(actualLabelFilename);
 
     // Set up an object to smooth recognition results to increase accuracy.
     recognizeCommands =
@@ -266,6 +255,36 @@ public class SpeechActivity extends Activity
     }
 
     Button btn = (Button) findViewById(R.id.record_button);
+    changeModelDropdown = (Spinner) findViewById(R.id.changeModel);
+    ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, android.R.id.text1);
+    spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    changeModelDropdown.setAdapter(spinnerAdapter);
+    String[] models = new String[0];
+    try {
+      models = getAssets().list("models");
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    for(int z=0; z<models.length; z++){
+        Log.i(LOG_TAG, models[z]);
+        spinnerAdapter.add(models[z]);
+    }
+    spinnerAdapter.notifyDataSetChanged();
+
+    changeModelDropdown.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        @Override
+        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+          String model = (String) parent.getItemAtPosition(position);
+          Log.i(LOG_TAG, "Selected model: " + model);
+          changeModel(model);
+        }
+
+        @Override
+        public void onNothingSelected(AdapterView<?> parent) {
+
+        }
+    });
+
     btn.setOnClickListener(new View.OnClickListener() {
         public void onClick(View v) {
             startRecording();
@@ -362,6 +381,24 @@ public class SpeechActivity extends Activity
 
   }
 
+  private void getLabels(String labelFile){
+    labels = new ArrayList<>();
+    BufferedReader br = null;
+    try {
+      br = new BufferedReader(new InputStreamReader(getAssets().open(labelFile)));
+      String line;
+      while ((line = br.readLine()) != null) {
+        labels.add(line);
+        if (line.charAt(0) != '_') {
+          displayedLabels.add(line.substring(0, 1).toUpperCase() + line.substring(1));
+        }
+      }
+      br.close();
+    } catch (IOException e) {
+      throw new RuntimeException("Problem reading label file!", e);
+    }
+  }
+
   private void requestMicrophonePermission() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
       requestPermissions(
@@ -381,6 +418,51 @@ public class SpeechActivity extends Activity
         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
       //startRecording();
       startRecognition();
+    }
+  }
+
+  public void changeModel(String modelName){
+    try {
+
+      modelName = "models/" + modelName;
+      String labelName;
+
+      char lastExtension = modelName.charAt(modelName.lastIndexOf("_") + 1);
+
+      boolean isSI = modelName.split("_")[1].equals("SI");
+      System.out.println("isSI: " + isSI);
+      System.out.println("lastExtension: " + lastExtension);
+      System.out.println(new String(new char[]{'1', '2'}).indexOf(lastExtension));
+
+      if(isSI){
+        labelName = "45.txt";
+        NO_COMMANDS = 45;
+        SAMPLE_DURATION_MS = 2000;
+      }else if(new String(new char[]{'1', '2'}).indexOf(lastExtension) != -1){
+        labelName = "10.txt";
+        NO_COMMANDS = 10;
+      }else{
+        labelName = "30.txt";
+        NO_COMMANDS = 30;
+      }
+
+      getLabels(labelName);
+      System.out.println(labelName);
+        System.out.println(labels);
+
+      // Set up an object to smooth recognition results to increase accuracy.
+      recognizeCommands =
+              new RecognizeCommands(
+                      labels,
+                      AVERAGE_WINDOW_DURATION_MS,
+                      DETECTION_THRESHOLD,
+                      SUPPRESSION_MS,
+                      MINIMUM_COUNT,
+                      MINIMUM_TIME_BETWEEN_SAMPLES_MS);
+      tfLiteModel = loadModelFile(getAssets(), modelName);
+      recreateInterpreter();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -591,9 +673,9 @@ public class SpeechActivity extends Activity
          * Start my implementation testing
          */
         // Declare variables that are used in my model.
-        float[] floatInputBuffer2 = new float[SAMPLE_RATE];
+        float[] floatInputBuffer2 = new float[SAMPLE_RATE * (SAMPLE_DURATION_MS / 1000)];
         float[][] outputScores2 = new float[1][NO_COMMANDS];
-        for (int i = 0; i < SAMPLE_RATE; i++) {
+        for (int i = 0; i < SAMPLE_RATE * (SAMPLE_DURATION_MS / 1000); i++) {
             floatInputBuffer2[i] = floatInputBuffer[i][0];
         }
 
@@ -614,30 +696,30 @@ public class SpeechActivity extends Activity
             recordingBufferLock.unlock();
         }
         System.out.println("Pre strip initialize");
-        if(strip == null) {
-          List<float[][]> test_mfccs = null;
-          try {
-            System.out.println(Arrays.toString(getAssets().list("")));
-            InputStream fis = getAssets().open("mfcc_test.tmp");
-            System.out.println("Found a file!");
-            ObjectInputStream ois = new ObjectInputStream(fis);
-            test_mfccs = (List<float[][]>) ois.readObject();
-            ois.close();
-            fis.close();
-
-          } catch (IOException | ClassNotFoundException | ClassCastException e) {
-            System.out.println(e);
-          }
-          strip = new Strip(test_mfccs, tfLite, NO_COMMANDS, tfLiteLock, labels);
-          stripEntropy = new float[strip.N_TEST];
-          System.out.println("Done initializing strip");
-        }
-        long stripStartTime = new Date().getTime();
-        System.out.println("Pre strip");
-        stripEntropy = strip.getEntropy(mfccs.clone());
-        System.out.println("Post strip");
-
-        System.out.println("Strip time: " + (new Date().getTime() - stripStartTime) + " ms");
+//        if(strip == null) {
+//          List<float[][]> test_mfccs = null;
+//          try {
+//            System.out.println(Arrays.toString(getAssets().list("")));
+//            InputStream fis = getAssets().open("mfcc_test.tmp");
+//            System.out.println("Found a file!");
+//            ObjectInputStream ois = new ObjectInputStream(fis);
+//            test_mfccs = (List<float[][]>) ois.readObject();
+//            ois.close();
+//            fis.close();
+//
+//          } catch (IOException | ClassNotFoundException | ClassCastException e) {
+//            System.out.println(e);
+//          }
+//          strip = new Strip(test_mfccs, tfLite, NO_COMMANDS, tfLiteLock, labels);
+//          stripEntropy = new float[strip.N_TEST];
+//          System.out.println("Done initializing strip");
+//        }
+//        long stripStartTime = new Date().getTime();
+//        System.out.println("Pre strip");
+//        stripEntropy = strip.getEntropy(mfccs.clone());
+//        System.out.println("Post strip");
+//
+//        System.out.println("Strip time: " + (new Date().getTime() - stripStartTime) + " ms");
 
         len_row = mfccs.length;
         len_col = mfccs[0].length;
@@ -647,7 +729,8 @@ public class SpeechActivity extends Activity
         // fixed in the future so that jlibrosa and librosa yield the same
         // results.
         rows = 40;
-        cols = SAMPLE_RATE == 16000 ? 37 : 19;
+        cols = SAMPLE_RATE == 16000 ? (SAMPLE_DURATION_MS == 1000 ? 37 : 73) : 19;
+
         float[][][][] mfccs_correct = new float[1][rows][cols][1];
         for (int i = 0; i < rows; i++) {
           for (int j = 0; j < cols; j++) {
