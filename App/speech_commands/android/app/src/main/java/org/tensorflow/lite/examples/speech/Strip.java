@@ -1,6 +1,9 @@
 package org.tensorflow.lite.examples.speech;
 
 import org.tensorflow.lite.Interpreter;
+
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -15,7 +18,7 @@ public class Strip {
     private final int MFCC_SIZE_ROW = 40;
     private final int MFCC_SIZE_COL = 37;
     private final int N_SAMPLES = 50;
-    public final int N_TEST = 100;
+    public final int N_TEST = 50;
     private final Interpreter tfLite;
     private final int labelSize;
 
@@ -35,6 +38,41 @@ public class Strip {
 
     }
 
+    public static boolean isPoisoned(float a[]) {
+        // get the sum of array
+        float sum = 0.0f;
+        for (float i : a) {
+            sum += i;
+        }
+
+        // get the mean of array
+        int length = a.length;
+        float mean = sum / length;
+
+        // calculate the standard deviation
+        double standardDeviation = 0.0;
+        for (double num : a) {
+            standardDeviation += Math.pow(num - mean, 2);
+        }
+
+        double result = Math.sqrt(standardDeviation / length);
+
+        System.out.println("Standard Deviation = " + result);
+
+        return result <= 0.05 || mean <= 0.15;
+    }
+
+//    private float[][] superimpose(float[][] mfcc){
+//        float[][] superimposed = new float[MFCC_SIZE_ROW][MFCC_SIZE_COL];
+//
+//        for(int i=0; i<MFCC_SIZE_ROW; i++){
+//            for(int j=0; j<MFCC_SIZE_COL; j++){
+//                superimposed[i][j] = mfcc[i][j] +  (float) randomNumGenerator.nextDoubleFast();
+//            }
+//        }
+//        return superimposed;
+//    }
+
     private float[][] superimpose(float[][] mfcc){
         float[][] superimposed = new float[MFCC_SIZE_ROW][MFCC_SIZE_COL];
 
@@ -43,7 +81,7 @@ public class Strip {
 
         for(int i=0; i<MFCC_SIZE_ROW; i++){
             for(int j=0; j<MFCC_SIZE_COL; j++){
-                superimposed[i][j] = mfcc[i][j] + mfcc2[i][j];
+                superimposed[i][j] = mfcc[i][j] + 0.5f * mfcc2[i][j];
             }
         }
         return superimposed;
@@ -98,7 +136,7 @@ public class Strip {
             float[][] result = new float[N_SAMPLES][labelSize];
             // For the number of samples we superimpose everytime we get a new random mfcc
             for (int j=0; j<N_SAMPLES; j++){
-                System.out.println("Test " + i + " of " + N_TEST + ", Sample " + j + " of " + N_SAMPLES);
+//                System.out.println("Test " + i + " of " + N_TEST + ", Sample " + j + " of " + N_SAMPLES);
                 result[j] = predict(superimpose(mfcc_copy));
             }
 
@@ -122,8 +160,47 @@ public class Strip {
         Arrays.sort(entropy);
         System.out.println(Arrays.toString(entropy));
         System.out.println("Entropy: min(" + entropy[0] + "), max("+ entropy[N_TEST-1] + ") diff(" + (entropy[N_TEST-1] - entropy[0]) + ")");
+
         return entropy;
     }
+
+//    public float[] getEntropy(float[][] mfcc){
+//        float[] entropy = new float[N_TEST];
+//
+//        // For the number of tests we superimpose the audio
+//        for(int i=0; i<N_TEST; i++){
+//            // Clone the array so that we never modify the original
+//            float[][] mfcc_copy = mfcc.clone();
+//
+//            // For the number of samples we superimpose everytime we get a new random mfcc
+//            for (int j=0; j<N_SAMPLES; j++){
+//                mfcc_copy = superimpose(mfcc_copy);
+//            }
+//
+//            float[] result = predict(mfcc_copy);
+//
+//            // Checks to make sure it is working
+////            System.out.println(Arrays.toString(result));
+////            System.out.println(getPredictedWord(result));
+//
+//            // Calculate entropy by summing the log of the probability
+//            float calculatedEntropy = 0;
+//            for (float x : result) {
+//                float temp = (float) (x * Math.log(x) / Math.log(2));
+//                if (Float.isNaN(temp)) {
+//                    temp = 0;
+//                }
+//                calculatedEntropy += temp;
+//            }
+//            entropy[i] = (-1 * calculatedEntropy);
+//        }
+//
+//        // Sort and print the results
+//        Arrays.sort(entropy);
+//        System.out.println(Arrays.toString(entropy));
+//        System.out.println("Entropy: min(" + entropy[0] + "), max("+ entropy[N_TEST-1] + ") diff(" + (entropy[N_TEST-1] - entropy[0]) + ")");
+//        return entropy;
+//    }
 
 
 }

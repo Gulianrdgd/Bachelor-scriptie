@@ -42,6 +42,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
+import android.graphics.Color;
 import android.media.AudioManager;
 
 import android.media.AudioTrack;
@@ -164,11 +165,13 @@ public class SpeechActivity extends Activity
 //          offTextView,
 //          stopTextView,
 //          goTextView;
-  private TextView sampleRateTextView, inferenceTimeTextView, resultTextView;
+  private TextView sampleRateTextView, inferenceTimeTextView, resultTextView, poisonedTextView;
   private ImageView plusImageView, minusImageView;
   private SwitchCompat apiSwitchCompat;
   private TextView threadsTextView;
   private float[] stripEntropy;
+
+  private final boolean ENABLE_STRIP = true;
   private long lastProcessingTimeMs;
   private Handler handler = new Handler();
   private TextView selectedTextView = null;
@@ -320,6 +323,7 @@ public class SpeechActivity extends Activity
     apiSwitchCompat = findViewById(R.id.api_info_switch);
 
     resultTextView = findViewById(R.id.result);
+    poisonedTextView = findViewById(R.id.poisoned);
 //    upTextView = findViewById(R.id.up);
 //    downTextView = findViewById(R.id.down);
 //    leftTextView = findViewById(R.id.left);
@@ -441,6 +445,9 @@ public class SpeechActivity extends Activity
       }else if(new String(new char[]{'1', '2'}).indexOf(lastExtension) != -1){
         labelName = "10.txt";
         NO_COMMANDS = 10;
+      }else if(lastExtension == 'd'){
+        labelName = "30_stef.txt";
+        NO_COMMANDS = 30;
       }else{
         labelName = "30.txt";
         NO_COMMANDS = 30;
@@ -664,12 +671,6 @@ public class SpeechActivity extends Activity
         }
 
         /*
-        Object[] inputArray = {floatInputBuffer, sampleRateList};
-        Map<Integer, Object> outputMap = new HashMap<>();
-        outputMap.put(0, outputScores);
-        */
-
-        /*
          * Start my implementation testing
          */
         // Declare variables that are used in my model.
@@ -680,10 +681,16 @@ public class SpeechActivity extends Activity
         }
 
         JLibrosa jlibrosa = new JLibrosa();
+        int N_MELS = 160;
+
         int N_MFCC = 40;
         int N_FFT = 1103;
-        int N_MELS = 128;
         int L_HOP = 441;
+
+//        int N_FFT = 400;
+//        int N_MFCC = 101;
+//        int L_HOP = 160;
+
         int len_row, len_col, rows, cols;
         recordingBufferLock.lock();
         float[][] mfccs;
@@ -695,32 +702,41 @@ public class SpeechActivity extends Activity
         } finally {
             recordingBufferLock.unlock();
         }
-        System.out.println("Pre strip initialize");
-//        if(strip == null) {
-//          List<float[][]> test_mfccs = null;
-//          try {
-//            System.out.println(Arrays.toString(getAssets().list("")));
-//            InputStream fis = getAssets().open("mfcc_test.tmp");
-//            System.out.println("Found a file!");
-//            ObjectInputStream ois = new ObjectInputStream(fis);
-//            test_mfccs = (List<float[][]>) ois.readObject();
-//            ois.close();
-//            fis.close();
-//
-//          } catch (IOException | ClassNotFoundException | ClassCastException e) {
-//            System.out.println(e);
-//          }
-//          strip = new Strip(test_mfccs, tfLite, NO_COMMANDS, tfLiteLock, labels);
-//          stripEntropy = new float[strip.N_TEST];
-//          System.out.println("Done initializing strip");
-//        }
-//        long stripStartTime = new Date().getTime();
-//        System.out.println("Pre strip");
-//        stripEntropy = strip.getEntropy(mfccs.clone());
-//        System.out.println("Post strip");
-//
-//        System.out.println("Strip time: " + (new Date().getTime() - stripStartTime) + " ms");
+        if(ENABLE_STRIP) {
+          System.out.println("Pre strip initialize");
+          if (strip == null) {
+            List<float[][]> test_mfccs = null;
+            try {
+              System.out.println(Arrays.toString(getAssets().list("")));
+              InputStream fis = getAssets().open("mfcc_test.tmp");
+              System.out.println("Found a file!");
+              ObjectInputStream ois = new ObjectInputStream(fis);
+              test_mfccs = (List<float[][]>) ois.readObject();
+              ois.close();
+              fis.close();
 
+            } catch (IOException | ClassNotFoundException | ClassCastException e) {
+              System.out.println(e);
+            }
+            strip = new Strip(test_mfccs, tfLite, NO_COMMANDS, tfLiteLock, labels);
+            stripEntropy = new float[strip.N_TEST];
+            System.out.println("Done initializing strip");
+          }
+          long stripStartTime = new Date().getTime();
+          System.out.println("Pre strip");
+          stripEntropy = strip.getEntropy(mfccs.clone());
+          Boolean isPoisoned = strip.isPoisoned(stripEntropy);
+          if (isPoisoned) {
+            poisonedTextView.setText("Poisoned");
+            poisonedTextView.setTextColor(Color.RED);
+          } else {
+            poisonedTextView.setText("Not Poisoned");
+            poisonedTextView.setTextColor(Color.GREEN);
+          }
+          System.out.println("Post strip");
+
+          System.out.println("Strip time: " + (new Date().getTime() - stripStartTime) + " ms");
+        }
         len_row = mfccs.length;
         len_col = mfccs[0].length;
         System.out.println("MFCCs => rows: " + len_row + "\tcols: " + len_col);
@@ -728,16 +744,30 @@ public class SpeechActivity extends Activity
         // for the neural network based on its input shape. This should be
         // fixed in the future so that jlibrosa and librosa yield the same
         // results.
+
+//        rows = 40;
+//        cols = 101;
+//
+//
+//        float[][][][] mfccs_correct = new float[1][cols][rows][1];
+//
+//        for (int i = 0; i < rows; i++) {
+//          for (int j = 0; j < cols; j++) {
+//            mfccs_correct[0][j][i][0] = mfccs[i][j];
+//          }
+//        }
+
         rows = 40;
         cols = SAMPLE_RATE == 16000 ? (SAMPLE_DURATION_MS == 1000 ? 37 : 73) : 19;
 
+
         float[][][][] mfccs_correct = new float[1][rows][cols][1];
+
         for (int i = 0; i < rows; i++) {
           for (int j = 0; j < cols; j++) {
             mfccs_correct[0][i][j][0] = mfccs[i][j];
           }
         }
-
 
         // Run our model
         Object[] inputArray_2 = {mfccs_correct};
@@ -843,7 +873,7 @@ public class SpeechActivity extends Activity
         tfLite = null;
       }
       tfLite = new Interpreter(tfLiteModel, tfLiteOptions);
-      tfLite.resizeInput(0, new int[] {100, 40, 1});
+      //tfLite.resizeInput(0, new int[] {100, 40, 1});
       //tfLite = new Interpreter(tfLiteModel, tfLiteOptions);
       //tfLite.resizeInput(0, new int[] {RECORDING_LENGTH, 1});
       //tfLite.resizeInput(1, new int[] {1});

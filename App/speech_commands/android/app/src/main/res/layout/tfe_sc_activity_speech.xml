@@ -57,6 +57,15 @@
                 android:textColor="#000000"
                 android:textStyle="bold" />
 
+            <TextView
+                android:id="@+id/poisoned"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAlignment="center"
+                android:textAppearance="@style/TextAppearance.AppCompat.Display3"
+                android:textColor="#000000"
+                android:textStyle="bold" />
+
             <Button
                 android:id="@+id/downloadClipboard"
                 android:layout_width="match_parent"
